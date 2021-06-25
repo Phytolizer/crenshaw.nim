@@ -1,5 +1,7 @@
-import strformat
-import strutils
+import std/[
+  strformat,
+  strutils,
+]
 
 type
   Symbol = string
