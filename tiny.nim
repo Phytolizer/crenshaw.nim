@@ -30,488 +30,488 @@ proc Lookup(t: SymTab, s: string): int =
     i -= 1
   return 0
 
-proc GetChar =
+proc getChar =
   Look = stdin.readChar
 
-proc Error(s: string) =
+proc error(s: string) =
   echo ""
   echo fmt"Error: {s}."
 
-proc Abort(s: string) =
-  Error(s)
+proc abort(s: string) =
+  error(s)
   quit(1)
 
-proc Expected(s: string) =
-  Abort(fmt"{s} Expected")
+proc expected(s: string) =
+  abort(fmt"{s} Expected")
 
-proc Undefined(name: string) =
-  Abort(fmt"Undefined Identifier {name}")
+proc undefined(name: string) =
+  abort(fmt"Undefined Identifier {name}")
 
-proc InTable(n: Symbol): bool =
+proc inTable(n: Symbol): bool =
   Lookup(ST, n) != 0
 
-proc AddEntry(n: Symbol, t: char) =
-  if InTable(n):
-    Abort(fmt"Duplicate Identifier {n}")
+proc addEntry(n: Symbol, t: char) =
+  if inTable(n):
+    abort(fmt"Duplicate Identifier {n}")
   ST.add(n)
   SType.add(t)
 
-proc IsAlpha(c: char): bool =
+proc isAlpha(c: char): bool =
   c.toUpperAscii in 'A'..'Z'
 
-proc IsDigit(c: char): bool =
+proc isDigit(c: char): bool =
   c in '0'..'9'
 
-proc IsOrop(c: char): bool =
+proc isOrOp(c: char): bool =
   c in ['|', '~']
 
-proc IsRelop(c: char): bool =
+proc isRelOp(c: char): bool =
   c in ['=', '#', '<', '>']
 
-proc IsWhite(c: char): bool =
+proc isWhite(c: char): bool =
   c in [' ', '\t']
 
-proc IsAlNum(c: char): bool =
-  IsAlpha(c) or IsDigit(c)
+proc isAlNum(c: char): bool =
+  isAlpha(c) or isDigit(c)
 
-proc SkipWhite =
-  while IsWhite(Look):
-    GetChar()
+proc skipWhite =
+  while isWhite(Look):
+    getChar()
 
-proc NewLine =
+proc newLine =
   while Look in ['\r', '\n']:
-    GetChar()
+    getChar()
     if Look == '\n':
-      GetChar()
-    SkipWhite()
+      getChar()
+    skipWhite()
 
-proc GetName =
-  NewLine()
-  if not IsAlpha(Look):
-    Expected("Name")
+proc getName =
+  newLine()
+  if not isAlpha(Look):
+    expected("Name")
   Value = ""
-  while IsAlNum(Look):
+  while isAlNum(Look):
     Value.add(Look.toUpperAscii)
-    GetChar()
-  SkipWhite()
+    getChar()
+  skipWhite()
 
-proc GetNum: int =
-  NewLine()
-  if not IsDigit(Look):
-    Expected("Integer")
+proc getNum: int =
+  newLine()
+  if not isDigit(Look):
+    expected("Integer")
   result = 0
-  while IsDigit(Look):
+  while isDigit(Look):
     result = 10 * result + ord(Look) - ord('0')
-    GetChar()
+    getChar()
 
-proc Scan =
-  GetName()
+proc scan =
+  getName()
   Token = KWcode[Lookup(KWlist, Value)]
 
-proc Match(x: char) =
-  NewLine()
+proc match(x: char) =
+  newLine()
   if Look == x:
-    GetChar()
+    getChar()
   else:
-    Expected(fmt"'{x}'")
+    expected(fmt"'{x}'")
 
-proc MatchString(x: string) =
+proc matchString(x: string) =
   if Value != x:
-    Expected(fmt"'{x}'")
+    expected(fmt"'{x}'")
 
-proc Emit(s: string) =
+proc emit(s: string) =
   stdout.write(fmt"{'\t'}{s}")
 
-proc EmitLn(s: string) =
-  Emit(s)
+proc emitLn(s: string) =
+  emit(s)
   echo ""
 
-proc NewLabel: string =
+proc newLabel: string =
   result = fmt"L{LCount}"
   LCount += 1
 
-proc PostLabel(label: string) =
+proc postLabel(label: string) =
   echo fmt"{label}:"
 
-proc Init =
+proc init =
   ST = @[]
   SType = @[]
-  GetChar()
-  Scan()
+  getChar()
+  scan()
 
-proc Header =
+proc header =
   echo "section .data"
 
-proc Prolog =
+proc prologue =
   echo "section .text"
-  EmitLn("global main")
-  PostLabel("main")
+  emitLn("global main")
+  postLabel("main")
 
-proc Clear =
-  EmitLn("XOR rax,rax")
+proc clear =
+  emitLn("XOR rax,rax")
 
-proc Epilog =
-  Clear()
-  EmitLn("RET")
+proc epilogue =
+  clear()
+  emitLn("RET")
 
-proc Negate =
-  EmitLn("NEG rax")
+proc negate =
+  emitLn("NEG rax")
 
-proc LoadConst(n: int) =
-  EmitLn(fmt"MOV rax,{n}")
+proc loadConst(n: int) =
+  emitLn(fmt"MOV rax,{n}")
 
-proc LoadVar(name: Symbol) =
-  if not InTable(name):
-    Undefined(fmt"{name}")
-  EmitLn(fmt"MOV rax,{name}")
+proc loadVar(name: Symbol) =
+  if not inTable(name):
+    undefined(fmt"{name}")
+  emitLn(fmt"MOV rax,{name}")
 
-proc Push =
-  EmitLn("PUSH rax")
+proc push =
+  emitLn("PUSH rax")
 
-proc NotIt =
-  EmitLn("NOT rax")
+proc notIt =
+  emitLn("NOT rax")
 
-proc PopAdd =
-  EmitLn("POP rbx")
-  EmitLn("ADD rax,rbx")
+proc popAdd =
+  emitLn("POP rbx")
+  emitLn("ADD rax,rbx")
 
-proc PopSub =
-  EmitLn("POP rbx")
-  EmitLn("SUB rax,rbx")
-  Negate()
+proc popSub =
+  emitLn("POP rbx")
+  emitLn("SUB rax,rbx")
+  negate()
 
-proc PopMul =
-  EmitLn("POP rbx")
-  EmitLn("IMUL rax,rbx")
+proc popMul =
+  emitLn("POP rbx")
+  emitLn("IMUL rax,rbx")
 
-proc PopDiv =
-  EmitLn("MOV rsi,rax")
-  EmitLn("POP rax")
-  EmitLn("CDQ")
-  EmitLn("IDIV rsi")
+proc popDiv =
+  emitLn("MOV rsi,rax")
+  emitLn("POP rax")
+  emitLn("CDQ")
+  emitLn("IDIV rsi")
 
-proc PopAnd =
-  EmitLn("POP rbx")
-  EmitLn("AND rax,rbx")
+proc popAnd =
+  emitLn("POP rbx")
+  emitLn("AND rax,rbx")
 
-proc PopOr =
-  EmitLn("POP rbx")
-  EmitLn("OR rax,rbx")
+proc popOr =
+  emitLn("POP rbx")
+  emitLn("OR rax,rbx")
 
-proc PopXor =
-  EmitLn("POP rbx")
-  EmitLn("XOR rax,rbx")
+proc popXor =
+  emitLn("POP rbx")
+  emitLn("XOR rax,rbx")
 
-proc PopCompare =
-  EmitLn("POP rbx")
-  EmitLn("CMP rax,rbx")
+proc popCompare =
+  emitLn("POP rbx")
+  emitLn("CMP rax,rbx")
 
-proc SetEqual =
-  EmitLn("SETNE al")
-  EmitLn("MOVZX rax,al")
-  EmitLn("DEC rax")
+proc setEqual =
+  emitLn("SETNE al")
+  emitLn("MOVZX rax,al")
+  emitLn("DEC rax")
 
-proc SetNEqual =
-  EmitLn("SETE al")
-  EmitLn("MOVZX rax,al")
-  EmitLn("DEC rax")
+proc setNotEqual =
+  emitLn("SETE al")
+  emitLn("MOVZX rax,al")
+  emitLn("DEC rax")
 
-proc SetGreater =
-  EmitLn("SETLE al")
-  EmitLn("MOVZX rax,al")
-  EmitLn("DEC rax")
+proc setGreater =
+  emitLn("SETLE al")
+  emitLn("MOVZX rax,al")
+  emitLn("DEC rax")
 
-proc SetLess =
-  EmitLn("SETGE al")
-  EmitLn("MOVZX rax,al")
-  EmitLn("DEC rax")
+proc setLess =
+  emitLn("SETGE al")
+  emitLn("MOVZX rax,al")
+  emitLn("DEC rax")
 
-proc SetLessOrEqual =
-  EmitLn("SETG al")
-  EmitLn("MOVZX rax,al")
-  EmitLn("DEC rax")
+proc setLessOrEqual =
+  emitLn("SETG al")
+  emitLn("MOVZX rax,al")
+  emitLn("DEC rax")
 
-proc SetGreaterOrEqual =
-  EmitLn("SETL al")
-  EmitLn("MOVZX rax,al")
-  EmitLn("DEC rax")
+proc setGreaterOrEqual =
+  emitLn("SETL al")
+  emitLn("MOVZX rax,al")
+  emitLn("DEC rax")
 
-proc Branch(label: string) =
-  EmitLn(fmt"JMP {label}")
+proc branch(label: string) =
+  emitLn(fmt"JMP {label}")
 
-proc BranchFalse(label: string) =
-  EmitLn("TEST rax,rax")
-  EmitLn(fmt"JE {label}")
+proc branchFalse(label: string) =
+  emitLn("TEST rax,rax")
+  emitLn(fmt"JE {label}")
 
-proc Store(name: Symbol) =
-  if not InTable(name):
-    Undefined(fmt"{name}")
-  EmitLn(fmt"MOV QWORD [{name}],rax")
+proc store(name: Symbol) =
+  if not inTable(name):
+    undefined(fmt"{name}")
+  emitLn(fmt"MOV QWORD [{name}],rax")
 
-proc Alloc(n: Symbol) =
-  if InTable(n):
-    Abort(fmt"Duplicate Variable Name {n}")
-  AddEntry(n, 'v')
+proc alloc(n: Symbol) =
+  if inTable(n):
+    abort(fmt"Duplicate Variable Name {n}")
+  addEntry(n, 'v')
   stdout.write(fmt"{n}{'\t'}DQ ")
   if Look == '=':
-    Match('=')
+    match('=')
     if Look == '-':
       stdout.write(Look)
-      Match('-')
-    echo GetNum()
+      match('-')
+    echo getNum()
   else:
     echo "0"
 
-proc Decl =
-  GetName()
-  Alloc(Value)
+proc decl =
+  getName()
+  alloc(Value)
   while Look == ',':
-    GetChar()
-    Alloc(Value)
+    getChar()
+    alloc(Value)
 
-proc TopDecls =
-  NewLine()
-  Scan()
+proc topDecls =
+  newLine()
+  scan()
   while Token != 'b':
     case Token:
     of 'v':
-      Decl()
+      decl()
     else:
-      Abort(fmt"Unrecognized Keyword '{Look}'")
-    NewLine()
-    Scan()
+      abort(fmt"Unrecognized Keyword '{Look}'")
+    newLine()
+    scan()
 
-proc BoolExpression
+proc boolExpression
 
-proc Factor =
+proc factor =
   if Look == '(':
-    Match('(')
-    BoolExpression()
-    Match(')')
-  elif IsAlpha(Look):
-    GetName()
-    LoadVar(Value)
+    match('(')
+    boolExpression()
+    match(')')
+  elif isAlpha(Look):
+    getName()
+    loadVar(Value)
   else:
-    LoadConst(GetNum())
+    loadConst(getNum())
 
-proc NegFactor =
-  Match('-')
-  if IsDigit(Look):
-    LoadConst(-GetNum())
+proc negFactor =
+  match('-')
+  if isDigit(Look):
+    loadConst(-getNum())
   else:
-    Factor()
-    Negate()
+    factor()
+    negate()
 
-proc FirstFactor =
+proc firstFactor =
   case Look:
   of '+':
-    Match('+')
-    Factor()
+    match('+')
+    factor()
   of '-':
-    NegFactor()
+    negFactor()
   else:
-    Factor()
+    factor()
 
-proc Multiply =
-  Match('*')
-  Factor()
-  PopMul()
+proc multiply =
+  match('*')
+  factor()
+  popMul()
 
-proc Divide =
-  Match('/')
-  Factor()
-  PopDiv()
+proc divide =
+  match('/')
+  factor()
+  popDiv()
 
-proc Term1 =
+proc term1 =
   while Look in ['*', '/']:
-    Push()
+    push()
     case Look:
-    of '*': Multiply()
-    of '/': Divide()
+    of '*': multiply()
+    of '/': divide()
     else: discard
 
-proc Term =
-  Factor()
-  Term1()
+proc term =
+  factor()
+  term1()
 
-proc FirstTerm =
-  FirstFactor()
-  Term1()
+proc firstTerm =
+  firstFactor()
+  term1()
 
-proc Add =
-  Match('+')
-  Term()
-  PopAdd()
+proc add =
+  match('+')
+  term()
+  popAdd()
 
-proc Subtract =
-  Match('-')
-  Term()
-  PopSub()
+proc subtract =
+  match('-')
+  term()
+  popSub()
 
-proc Expression =
-  NewLine()
-  FirstTerm()
+proc expression =
+  newLine()
+  firstTerm()
   while Look in ['+', '-']:
-    Push()
+    push()
     case Look:
-    of '+': Add()
-    of '-': Subtract()
+    of '+': add()
+    of '-': subtract()
     else: discard
-    NewLine()
+    newLine()
 
-proc LessOrEqual =
-  Match('=')
-  Expression()
-  PopCompare()
-  SetLessOrEqual()
+proc lessOrEqual =
+  match('=')
+  expression()
+  popCompare()
+  setLessOrEqual()
 
-proc GreaterOrEqual =
-  Match('=')
-  Expression()
-  PopCompare()
-  SetGreaterOrEqual()
+proc greaterOrEqual =
+  match('=')
+  expression()
+  popCompare()
+  setGreaterOrEqual()
 
-proc Equals =
-  Match('=')
-  Expression()
-  PopCompare()
-  SetEqual()
+proc equals =
+  match('=')
+  expression()
+  popCompare()
+  setEqual()
 
-proc NotEqual =
-  Match('#')
-  Expression()
-  PopCompare()
-  SetNEqual()
+proc notEquals =
+  match('#')
+  expression()
+  popCompare()
+  setNotEqual()
 
-proc Less =
-  Match('<')
+proc less =
+  match('<')
   case Look:
-  of '=': LessOrEqual()
-  of '>': NotEqual()
+  of '=': lessOrEqual()
+  of '>': notEquals()
   else:
-    Expression()
-    PopCompare()
-    SetLess()
+    expression()
+    popCompare()
+    setLess()
 
-proc Greater =
-  Match('>')
+proc greater =
+  match('>')
   if Look == '=':
-    GreaterOrEqual()
+    greaterOrEqual()
   else:
-    Expression()
-    PopCompare()
-    SetGreater()
+    expression()
+    popCompare()
+    setGreater()
 
-proc Relation =
-  Expression()
-  if IsRelop(Look):
-    Push()
+proc relation =
+  expression()
+  if isRelOp(Look):
+    push()
     case Look:
-    of '=': Equals()
-    of '#': NotEqual()
-    of '<': Less()
-    of '>': Greater()
+    of '=': equals()
+    of '#': notEquals()
+    of '<': less()
+    of '>': greater()
     else: discard
 
-proc NotFactor =
+proc notFactor =
   if Look == '!':
-    Match('!')
-    Relation()
-    NotIt()
+    match('!')
+    relation()
+    notIt()
   else:
-    Relation()
+    relation()
 
-proc BoolTerm =
-  NewLine()
-  NotFactor()
+proc boolTerm =
+  newLine()
+  notFactor()
   while Look == '&':
-    Push()
-    Match('&')
-    NotFactor()
-    PopAnd()
-    NewLine()
+    push()
+    match('&')
+    notFactor()
+    popAnd()
+    newLine()
 
-proc BoolOr =
-  Match('|')
-  BoolTerm()
-  PopOr()
+proc boolOr =
+  match('|')
+  boolTerm()
+  popOr()
 
-proc BoolXor =
-  Match('~')
-  BoolTerm()
-  PopXor()
+proc boolXor =
+  match('~')
+  boolTerm()
+  popXor()
 
-proc BoolExpression =
-  NewLine()
-  BoolTerm()
-  while IsOrop(Look):
-    Push()
+proc boolExpression =
+  newLine()
+  boolTerm()
+  while isOrOp(Look):
+    push()
     case Look:
-    of '|': BoolOr()
-    of '~': BoolXor()
+    of '|': boolOr()
+    of '~': boolXor()
     else: discard
-    NewLine()
+    newLine()
 
-proc Assignment =
+proc assignment =
   let Name = Value
-  Match('=')
-  BoolExpression()
-  Store(Name)
+  match('=')
+  boolExpression()
+  store(Name)
 
-proc Block
+proc doBlock
 
-proc DoIf =
-  BoolExpression()
-  let l1 = NewLabel()
+proc doIf =
+  boolExpression()
+  let l1 = newLabel()
   var l2 = l1
-  BranchFalse(l1)
-  Block()
+  branchFalse(l1)
+  doBlock()
   if Token == 'l':
-    l2 = NewLabel()
-    Branch(l2)
-    PostLabel(l1)
-    Block()
-  PostLabel(l2)
-  MatchString("ENDIF")
+    l2 = newLabel()
+    branch(l2)
+    postLabel(l1)
+    doBlock()
+  postLabel(l2)
+  matchString("ENDIF")
 
-proc DoWhile =
-  let l1 = NewLabel()
-  let l2 = NewLabel()
-  PostLabel(l1)
-  BoolExpression()
-  BranchFalse(l2)
-  Block()
-  MatchString("ENDWHILE")
-  Branch(l1)
-  PostLabel(l2)
+proc doWhile =
+  let l1 = newLabel()
+  let l2 = newLabel()
+  postLabel(l1)
+  boolExpression()
+  branchFalse(l2)
+  doBlock()
+  matchString("ENDWHILE")
+  branch(l1)
+  postLabel(l2)
 
-proc Block =
-  NewLine()
-  Scan()
+proc doBlock =
+  newLine()
+  scan()
   while not (Token in ['e', 'l']):
     case Token:
-    of 'i': DoIf()
-    of 'w': DoWhile()
-    else: Assignment()
-    NewLine()
-    Scan()
+    of 'i': doIf()
+    of 'w': doWhile()
+    else: assignment()
+    newLine()
+    scan()
 
-proc Main =
-  MatchString("BEGIN")
-  Prolog()
-  Block()
-  MatchString("END")
-  Epilog()
+proc main =
+  matchString("BEGIN")
+  prologue()
+  doBlock()
+  matchString("END")
+  epilogue()
 
-proc Prog =
-  MatchString("PROGRAM")
-  Header()
-  TopDecls()
-  Main()
-  Match('.')
+proc program =
+  matchString("PROGRAM")
+  header()
+  topDecls()
+  main()
+  match('.')
 
 when isMainModule:
-  Init()
-  Prog()
+  init()
+  program()
   if not (Look in ['\r', '\n']):
-    Abort("Unexpected data after '.'")
+    abort("Unexpected data after '.'")
