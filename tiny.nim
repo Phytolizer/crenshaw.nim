@@ -206,35 +206,33 @@ proc popCompare =
   emitLn("POP rbx")
   emitLn("CMP rax,rbx")
 
-proc setEqual =
-  emitLn("SETNE al")
+template comparisonToBool =
   emitLn("MOVZX rax,al")
   emitLn("DEC rax")
+
+proc setEqual =
+  emitLn("SETNE al")
+  comparisonToBool()
 
 proc setNotEqual =
   emitLn("SETE al")
-  emitLn("MOVZX rax,al")
-  emitLn("DEC rax")
+  comparisonToBool()
 
 proc setGreater =
   emitLn("SETLE al")
-  emitLn("MOVZX rax,al")
-  emitLn("DEC rax")
+  comparisonToBool()
 
 proc setLess =
   emitLn("SETGE al")
-  emitLn("MOVZX rax,al")
-  emitLn("DEC rax")
+  comparisonToBool()
 
 proc setLessOrEqual =
   emitLn("SETG al")
-  emitLn("MOVZX rax,al")
-  emitLn("DEC rax")
+  comparisonToBool()
 
 proc setGreaterOrEqual =
   emitLn("SETL al")
-  emitLn("MOVZX rax,al")
-  emitLn("DEC rax")
+  comparisonToBool()
 
 proc branch(label: string) =
   emitLn(fmt"JMP {label}")
